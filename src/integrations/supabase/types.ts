@@ -14,7 +14,130 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      customer_profiles: {
+        Row: {
+          city: string | null
+          created_at: string
+          id: string
+          looking_for: string | null
+          profile_id: string
+          updated_at: string
+        }
+        Insert: {
+          city?: string | null
+          created_at?: string
+          id?: string
+          looking_for?: string | null
+          profile_id: string
+          updated_at?: string
+        }
+        Update: {
+          city?: string | null
+          created_at?: string
+          id?: string
+          looking_for?: string | null
+          profile_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_profiles_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expert_profiles: {
+        Row: {
+          city: string
+          clinic_name: string
+          created_at: string
+          id: string
+          is_verified: boolean
+          license_url: string | null
+          profile_id: string
+          profile_views: number
+          specialization: Database["public"]["Enums"]["specialization_type"]
+          starting_price_inr: number
+          treatments_offered: string[] | null
+          updated_at: string
+          years_experience: number
+        }
+        Insert: {
+          city: string
+          clinic_name: string
+          created_at?: string
+          id?: string
+          is_verified?: boolean
+          license_url?: string | null
+          profile_id: string
+          profile_views?: number
+          specialization: Database["public"]["Enums"]["specialization_type"]
+          starting_price_inr: number
+          treatments_offered?: string[] | null
+          updated_at?: string
+          years_experience: number
+        }
+        Update: {
+          city?: string
+          clinic_name?: string
+          created_at?: string
+          id?: string
+          is_verified?: boolean
+          license_url?: string | null
+          profile_id?: string
+          profile_views?: number
+          specialization?: Database["public"]["Enums"]["specialization_type"]
+          starting_price_inr?: number
+          treatments_offered?: string[] | null
+          updated_at?: string
+          years_experience?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expert_profiles_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          phone_number: string | null
+          updated_at: string
+          user_id: string
+          user_type: Database["public"]["Enums"]["user_type"]
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          phone_number?: string | null
+          updated_at?: string
+          user_id: string
+          user_type: Database["public"]["Enums"]["user_type"]
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          phone_number?: string | null
+          updated_at?: string
+          user_id?: string
+          user_type?: Database["public"]["Enums"]["user_type"]
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +146,12 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      specialization_type:
+        | "trichologist"
+        | "dermatologist"
+        | "surgeon"
+        | "hair_stylist"
+      user_type: "customer" | "expert"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +278,14 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      specialization_type: [
+        "trichologist",
+        "dermatologist",
+        "surgeon",
+        "hair_stylist",
+      ],
+      user_type: ["customer", "expert"],
+    },
   },
 } as const
