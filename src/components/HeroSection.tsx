@@ -70,10 +70,10 @@ const HeroSection = () => {
               
               <div className="md:col-span-1">
                 <Button 
-                  onClick={scrollToExperts}
+                  onClick={() => window.location.href = '/auth/customer'}
                   className="w-full h-12 bg-gradient-primary hover:scale-105 transition-transform glow-primary text-lg font-semibold"
                 >
-                  Search Experts
+                  Start Your Hair Journey
                 </Button>
               </div>
             </div>

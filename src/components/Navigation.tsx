@@ -60,10 +60,17 @@ const Navigation = () => {
 
           {/* CTA Buttons */}
           <div className="flex items-center space-x-4">
-            <Button variant="outline" className="hidden sm:inline-flex">
+            <Button 
+              variant="outline" 
+              className="hidden sm:inline-flex"
+              onClick={() => window.location.href = '/auth/customer'}
+            >
               Sign In
             </Button>
-            <Button className="bg-gradient-primary hover:scale-105 transition-transform glow-primary">
+            <Button 
+              className="bg-gradient-primary hover:scale-105 transition-transform glow-primary"
+              onClick={() => window.location.href = '/auth/expert'}
+            >
               Join as Expert
             </Button>
           </div>
