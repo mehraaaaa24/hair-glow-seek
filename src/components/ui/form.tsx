@@ -101,26 +101,25 @@ const FormLabel = React.forwardRef<
 })
 FormLabel.displayName = "FormLabel"
 
-const FormControl = React.forwardRef<
-  React.ElementRef<typeof Slot>,
-  React.ComponentPropsWithoutRef<typeof Slot>
->(({ ...props }, ref) => {
-  const { error, formItemId, formDescriptionId, formMessageId } = useFormField()
-
-  return (
-    <Slot
-      ref={ref}
-      id={formItemId}
-      aria-describedby={
-        !error
-          ? `${formDescriptionId}`
-          : `${formDescriptionId} ${formMessageId}`
-      }
-      aria-invalid={!!error}
-      {...props}
-    />
-  )
-})
+const FormControl = React.forwardRef<any, any>(({ children, ...props }, ref) => {
+  const { error, formItemId, formDescriptionId, formMessageId } = useFormField();
+  if (!React.isValidElement(children)) {
+    return children;
+  }
+  const extraProps = {
+    id: formItemId,
+    'aria-describedby': !error
+      ? `${formDescriptionId}`
+      : `${formDescriptionId} ${formMessageId}`,
+    'aria-invalid': !!error,
+    ...((children.props as object) ?? {}),
+    ...props,
+  };
+  if (typeof children.type === 'string') {
+    (extraProps as any).ref = ref;
+  }
+  return React.cloneElement(children, extraProps);
+});
 FormControl.displayName = "FormControl"
 
 const FormDescription = React.forwardRef<

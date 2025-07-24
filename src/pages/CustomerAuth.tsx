@@ -139,7 +139,7 @@ const CustomerAuth = () => {
         </CardHeader>
         <CardContent className="space-y-6">
           {!isLogin ? (
-            <Form {...signUpForm}>
+            <Form {...signUpForm} key="signup">
               <form onSubmit={signUpForm.handleSubmit(onSignUp)} className="space-y-4">
                 <FormField
                   control={signUpForm.control}
@@ -233,7 +233,7 @@ const CustomerAuth = () => {
               </form>
             </Form>
           ) : (
-            <Form {...loginForm}>
+            <Form {...loginForm} key="login">
               <form onSubmit={loginForm.handleSubmit(onLogin)} className="space-y-4">
                 <FormField
                   control={loginForm.control}
