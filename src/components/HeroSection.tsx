@@ -9,7 +9,7 @@ const HeroSection = () => {
   };
 
   return (
-    <section className="min-h-screen flex items-center justify-center gradient-hero relative overflow-hidden">
+    <section className="min-h-screen flex items-center justify-center gradient-hero relative overflow-hidden pt-24">
       {/* Background Pattern */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_40%,rgba(120,119,198,0.3),transparent_70%)]" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_80%,rgba(139,92,246,0.2),transparent_70%)]" />
