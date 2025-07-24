@@ -65,37 +65,43 @@ const CustomerAuth = () => {
           description: error.message,
           variant: 'destructive',
         });
+        setIsLoading(false);
         return;
       }
 
       // Create profile after successful signup
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          user_id: (await supabase.auth.getUser()).data.user?.id,
-          user_type: 'customer',
-          full_name: data.fullName,
-          phone_number: data.phoneNumber,
-          email: data.email,
-        });
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            user_id: user.id,
+            user_type: 'customer',
+            full_name: data.fullName,
+            phone_number: data.phoneNumber,
+            email: data.email,
+          });
 
-      if (profileError) {
-        console.error('Profile creation error:', profileError);
+        if (profileError) {
+          console.error('Profile creation error:', profileError);
+        }
       }
 
       toast({
         title: 'Account created successfully!',
-        description: 'Please check your email to verify your account.',
+        description: 'You can now access your dashboard.',
       });
 
-      navigate('/dashboard-customer');
+      // Navigate after a short delay to allow auth state to update
+      setTimeout(() => {
+        navigate('/dashboard-customer');
+      }, 500);
     } catch (error) {
       toast({
         title: 'An error occurred',
         description: 'Please try again later.',
         variant: 'destructive',
       });
-    } finally {
       setIsLoading(false);
     }
   };
@@ -111,17 +117,25 @@ const CustomerAuth = () => {
           description: error.message,
           variant: 'destructive',
         });
+        setIsLoading(false);
         return;
       }
 
-      navigate('/dashboard-customer');
+      toast({
+        title: 'Welcome back!',
+        description: 'Successfully signed in.',
+      });
+
+      // Navigate after a short delay to allow auth state to update
+      setTimeout(() => {
+        navigate('/dashboard-customer');
+      }, 500);
     } catch (error) {
       toast({
         title: 'An error occurred',
         description: 'Please try again later.',
         variant: 'destructive',
       });
-    } finally {
       setIsLoading(false);
     }
   };
@@ -276,8 +290,15 @@ const CustomerAuth = () => {
           
           <div className="text-center">
             <button
-              onClick={() => setIsLogin(!isLogin)}
+              onClick={() => {
+                setIsLogin(!isLogin);
+                setIsLoading(false);
+                // Reset both forms when switching
+                signUpForm.reset();
+                loginForm.reset();
+              }}
               className="text-sm text-muted-foreground hover:text-primary transition-colors"
+              disabled={isLoading}
             >
               {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Log in'}
             </button>
