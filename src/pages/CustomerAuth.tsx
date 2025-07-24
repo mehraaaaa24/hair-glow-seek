@@ -44,6 +44,7 @@ const CustomerAuth = () => {
       password: '',
       lookingFor: '',
     },
+    mode: 'onChange',
   });
 
   const loginForm = useForm<LoginFormData>({
@@ -52,6 +53,7 @@ const CustomerAuth = () => {
       email: '',
       password: '',
     },
+    mode: 'onChange',
   });
 
   const onSignUp = async (data: CustomerFormData) => {
@@ -291,11 +293,26 @@ const CustomerAuth = () => {
           <div className="text-center">
             <button
               onClick={() => {
-                setIsLogin(!isLogin);
+                const newLoginState = !isLogin;
+                setIsLogin(newLoginState);
                 setIsLoading(false);
-                // Reset both forms when switching
-                signUpForm.reset();
-                loginForm.reset();
+                // Force re-render with a small delay to ensure state is updated
+                setTimeout(() => {
+                  if (newLoginState) {
+                    loginForm.reset({
+                      email: '',
+                      password: '',
+                    });
+                  } else {
+                    signUpForm.reset({
+                      fullName: '',
+                      email: '',
+                      phoneNumber: '',
+                      password: '',
+                      lookingFor: '',
+                    });
+                  }
+                }, 0);
               }}
               className="text-sm text-muted-foreground hover:text-primary transition-colors"
               disabled={isLoading}

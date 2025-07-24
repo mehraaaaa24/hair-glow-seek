@@ -60,6 +60,7 @@ const ExpertAuth = () => {
       startingPrice: 500,
       password: '',
     },
+    mode: 'onChange',
   });
 
   const loginForm = useForm<LoginFormData>({
@@ -68,6 +69,7 @@ const ExpertAuth = () => {
       email: '',
       password: '',
     },
+    mode: 'onChange',
   });
 
   const toggleTreatment = (treatment: string) => {
@@ -416,13 +418,31 @@ const ExpertAuth = () => {
           <div className="text-center">
             <button
               onClick={() => {
-                setIsLogin(!isLogin);
+                const newLoginState = !isLogin;
+                setIsLogin(newLoginState);
                 setIsLoading(false);
-                // Reset both forms when switching
-                signUpForm.reset();
-                loginForm.reset();
                 // Reset selected treatments for expert signup
                 setSelectedTreatments([]);
+                // Force re-render with a small delay to ensure state is updated
+                setTimeout(() => {
+                  if (newLoginState) {
+                    loginForm.reset({
+                      email: '',
+                      password: '',
+                    });
+                  } else {
+                    signUpForm.reset({
+                      fullName: '',
+                      phoneNumber: '',
+                      email: '',
+                      clinicName: '',
+                      city: '',
+                      yearsExperience: 0,
+                      startingPrice: 500,
+                      password: '',
+                    });
+                  }
+                }, 0);
               }}
               className="text-sm text-muted-foreground hover:text-primary transition-colors"
               disabled={isLoading}
