@@ -26,15 +26,18 @@ interface Profile {
 }
 
 const ExpertDashboard = () => {
-  const { user, signOut } = useAuth();
+  const { user, signOut, loading: authLoading } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (user) {
       fetchProfile();
+    } else if (!authLoading && !user) {
+      // Redirect to auth if no user and not loading
+      window.location.href = '/auth/expert';
     }
-  }, [user]);
+  }, [user, authLoading]);
 
   const fetchProfile = async () => {
     try {
@@ -116,7 +119,7 @@ const ExpertDashboard = () => {
     { time: '3:30 PM', patient: 'Neha Singh', treatment: 'Hair Styling' }
   ];
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>

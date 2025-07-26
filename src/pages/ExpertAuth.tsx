@@ -60,6 +60,7 @@ const ExpertAuth = () => {
       startingPrice: 500,
       password: '',
     },
+    mode: 'onChange',
   });
 
   const loginForm = useForm<LoginFormData>({
@@ -68,6 +69,7 @@ const ExpertAuth = () => {
       email: '',
       password: '',
     },
+    mode: 'onChange',
   });
 
   const toggleTreatment = (treatment: string) => {
@@ -97,37 +99,43 @@ const ExpertAuth = () => {
           description: error.message,
           variant: 'destructive',
         });
+        setIsLoading(false);
         return;
       }
 
       // Create profile after successful signup
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          user_id: (await supabase.auth.getUser()).data.user?.id,
-          user_type: 'expert',
-          full_name: data.fullName,
-          phone_number: data.phoneNumber,
-          email: data.email,
-        });
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            user_id: user.id,
+            user_type: 'expert',
+            full_name: data.fullName,
+            phone_number: data.phoneNumber,
+            email: data.email,
+          });
 
-      if (profileError) {
-        console.error('Profile creation error:', profileError);
+        if (profileError) {
+          console.error('Profile creation error:', profileError);
+        }
       }
 
       toast({
         title: 'Expert profile submitted!',
-        description: 'We verify all experts within 24 hours.',
+        description: 'You can now access your dashboard.',
       });
 
-      navigate('/dashboard-expert');
+      // Navigate after a short delay to allow auth state to update
+      setTimeout(() => {
+        navigate('/dashboard-expert');
+      }, 500);
     } catch (error) {
       toast({
         title: 'An error occurred',
         description: 'Please try again later.',
         variant: 'destructive',
       });
-    } finally {
       setIsLoading(false);
     }
   };
@@ -143,17 +151,25 @@ const ExpertAuth = () => {
           description: error.message,
           variant: 'destructive',
         });
+        setIsLoading(false);
         return;
       }
 
-      navigate('/dashboard-expert');
+      toast({
+        title: 'Welcome back!',
+        description: 'Successfully signed in.',
+      });
+
+      // Navigate after a short delay to allow auth state to update
+      setTimeout(() => {
+        navigate('/dashboard-expert');
+      }, 500);
     } catch (error) {
       toast({
         title: 'An error occurred',
         description: 'Please try again later.',
         variant: 'destructive',
       });
-    } finally {
       setIsLoading(false);
     }
   };
@@ -401,8 +417,35 @@ const ExpertAuth = () => {
           
           <div className="text-center">
             <button
-              onClick={() => setIsLogin(!isLogin)}
+              onClick={() => {
+                const newLoginState = !isLogin;
+                setIsLogin(newLoginState);
+                setIsLoading(false);
+                // Reset selected treatments for expert signup
+                setSelectedTreatments([]);
+                // Force re-render with a small delay to ensure state is updated
+                setTimeout(() => {
+                  if (newLoginState) {
+                    loginForm.reset({
+                      email: '',
+                      password: '',
+                    });
+                  } else {
+                    signUpForm.reset({
+                      fullName: '',
+                      phoneNumber: '',
+                      email: '',
+                      clinicName: '',
+                      city: '',
+                      yearsExperience: 0,
+                      startingPrice: 500,
+                      password: '',
+                    });
+                  }
+                }, 0);
+              }}
               className="text-sm text-muted-foreground hover:text-primary transition-colors"
+              disabled={isLoading}
             >
               {isLogin ? "Don't have an account? Join as Expert" : 'Already have an account? Log in'}
             </button>
