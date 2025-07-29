@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -8,10 +9,26 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '
 import { supabase } from '@/integrations/supabase/client';
 
 // --- SCHEMAS ---
+const countryPhoneLengths: Record<string, number> = {
+  '+91': 10, // India
+  '+1': 10,  // US/Canada
+  '+44': 10, // UK (simplified)
+  '+61': 9,  // Australia (simplified)
+};
 const page1Schema = z.object({
   email: z.string().email('Invalid email'),
-  phone: z.string().optional(),
+  countryCode: z.enum(['+91', '+1', '+44', '+61']),
+  phone: z.string(),
   password: z.string().min(6, 'Password must be at least 6 characters'),
+}).superRefine((val, ctx) => {
+  const len = countryPhoneLengths[val.countryCode];
+  if (val.phone.length !== len || !/^\d+$/.test(val.phone)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Invalid phone number for selected country',
+      path: ['phone'],
+    });
+  }
 });
 const page2Schema = z.object({
   age: z.string().min(1, 'Required'),
@@ -27,15 +44,16 @@ const page3Schema = z.object({
 
 // --- MAIN COMPONENT ---
 const CustomerOnboarding = () => {
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [page1, setPage1] = useState(null);
   const [page2, setPage2] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
   // Page 1: Account Info + Social
-  const form1 = useForm({ resolver: zodResolver(page1Schema), defaultValues: { email: '', phone: '', password: '' } });
+  const form1 = useForm<z.infer<typeof page1Schema>>({ resolver: zodResolver(page1Schema), defaultValues: { email: '', countryCode: '+91', phone: '', password: '' } });
   // Page 2: Demographics
-  const form2 = useForm({ resolver: zodResolver(page2Schema), defaultValues: { age: '', gender: 'male', city: '' } });
+  const form2 = useForm<z.infer<typeof page2Schema>>({ resolver: zodResolver(page2Schema), defaultValues: { age: '', gender: 'male', city: '' } });
   // Page 3: Hair Profile
   const form3 = useForm({ resolver: zodResolver(page3Schema), defaultValues: { hairConcerns: [], hairType: 'straight', agree: false, promo: false } });
 
@@ -59,17 +77,19 @@ const CustomerOnboarding = () => {
     setIsLoading(true);
     // Combine all data
     const payload = { ...page1, ...page2, ...data };
+    // Combine country code and phone for Supabase
+    const fullPhone = `${payload.countryCode}${payload.phone}`;
     // Sign up with Supabase
     const { error, data: signUpData } = await supabase.auth.signUp({
       email: payload.email,
       password: payload.password,
-      phone: payload.phone || undefined,
+      phone: fullPhone,
     });
     // Optionally: Save demographics/hair profile to a user profile table
     setIsLoading(false);
     if (!error) {
-      // Success: redirect or show success message
-      alert('Account created!');
+      // Success: redirect to customer dashboard
+      navigate('/dashboard-customer');
     } else {
       alert(error.message);
     }
@@ -86,21 +106,57 @@ const CustomerOnboarding = () => {
               <FormField control={form1.control} name="email" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Email Address</FormLabel>
-                  <FormControl><Input type="email" {...field} /></FormControl>
+                  <FormControl><Input type="email" placeholder="Enter your email address" {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )} />
-              <FormField control={form1.control} name="phone" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Phone Number (optional)</FormLabel>
-                  <FormControl><Input type="tel" {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
+              <div className="flex flex-col gap-1">
+                <FormLabel>Phone number</FormLabel>
+                <div className="flex w-full rounded-lg overflow-hidden border border-muted-foreground/30 bg-black">
+                  <FormField control={form1.control} name="countryCode" render={({ field }) => (
+                    <FormItem className="w-36 flex-shrink-0">
+                      <FormControl>
+                        <select
+                          {...field}
+                          className="w-full h-full bg-black text-white px-3 py-2 focus:outline-none focus:bg-zinc-900 border-0 border-r border-muted-foreground/30 appearance-none font-medium"
+                        >
+                          <option value="+91">IN (+91)</option>
+                          <option value="+1">US (+1)</option>
+                          <option value="+44">UK (+44)</option>
+                          <option value="+61">AUS (+61)</option>
+                        </select>
+                      </FormControl>
+                    </FormItem>
+                  )} />
+                  <FormField control={form1.control} name="phone" render={({ field }) => (
+                    <FormItem className="flex-1">
+                      <FormControl>
+                        <input
+                          type="tel"
+                          maxLength={countryPhoneLengths[form1.watch('countryCode')]}
+                          placeholder="Add your phone number"
+                          className="w-full h-full bg-black text-white px-3 py-2 focus:outline-none focus:bg-zinc-900 border-0"
+                          {...field}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )} />
+                </div>
+                {/* Error message for phone field, shown below the group */}
+                <div className="flex gap-2">
+                  <div className="w-36"></div>
+                  <div className="flex-1">
+                    {/* Place FormMessage inside the phone FormField render so it works correctly */}
+                    {form1.formState.errors.phone && (
+                      <p className="text-sm text-destructive mt-1">{form1.formState.errors.phone.message as string}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
               <FormField control={form1.control} name="password" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Password</FormLabel>
-                  <FormControl><Input type="password" {...field} /></FormControl>
+                  <FormControl><Input type="password" placeholder="Create a password" value={field.value || ''} onChange={field.onChange} /> </FormControl>
                   <FormMessage />
                 </FormItem>
               )} />
