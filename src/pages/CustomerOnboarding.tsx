@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -16,6 +16,7 @@ const countryPhoneLengths: Record<string, number> = {
   '+61': 9,  // Australia (simplified)
 };
 const page1Schema = z.object({
+  name: z.string().min(2, 'Name is required'),
   email: z.string().email('Invalid email'),
   countryCode: z.enum(['+91', '+1', '+44', '+61']),
   phone: z.string(),
@@ -51,7 +52,7 @@ const CustomerOnboarding = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   // Page 1: Account Info + Social
-  const form1 = useForm<z.infer<typeof page1Schema>>({ resolver: zodResolver(page1Schema), defaultValues: { email: '', countryCode: '+91', phone: '', password: '' } });
+  const form1 = useForm<z.infer<typeof page1Schema>>({ resolver: zodResolver(page1Schema), defaultValues: { name: '', email: '', countryCode: '+91', phone: '', password: '' } });
   // Page 2: Demographics
   const form2 = useForm<z.infer<typeof page2Schema>>({ resolver: zodResolver(page2Schema), defaultValues: { age: '', gender: 'male', city: '' } });
   // Page 3: Hair Profile
@@ -59,8 +60,20 @@ const CustomerOnboarding = () => {
 
   // --- SOCIAL LOGIN HANDLERS ---
   const handleSocial = async (provider: 'google' | 'facebook' | 'apple') => {
-    await supabase.auth.signInWithOAuth({ provider });
+    // Use current origin + onboarding path for redirect
+    const redirectTo = `${window.location.origin}/auth/customer`;
+    await supabase.auth.signInWithOAuth({ provider, options: { redirectTo } });
   };
+  // --- ON MOUNT: If user is already authenticated, skip to step 2 ---
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setStep(2);
+      }
+    };
+    checkAuth();
+  }, []);
 
   // --- PAGE 1 SUBMIT ---
   const onPage1 = (data: any) => {
@@ -103,6 +116,13 @@ const CustomerOnboarding = () => {
           <Form {...form1} key="page1">
             <form onSubmit={form1.handleSubmit(onPage1)} className="space-y-6">
               <h2 className="text-2xl font-bold mb-4">Start Your Hair Journey</h2>
+              <FormField control={form1.control} name="name" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Name</FormLabel>
+                  <FormControl><Input type="text" placeholder="Enter your name" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
               <FormField control={form1.control} name="email" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Email Address</FormLabel>
