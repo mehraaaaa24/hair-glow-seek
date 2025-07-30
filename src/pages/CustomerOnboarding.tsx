@@ -64,16 +64,7 @@ const CustomerOnboarding = () => {
     const redirectTo = `${window.location.origin}/auth/customer`;
     await supabase.auth.signInWithOAuth({ provider, options: { redirectTo } });
   };
-  // --- ON MOUNT: If user is already authenticated, skip to step 2 ---
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setStep(2);
-      }
-    };
-    checkAuth();
-  }, []);
+
 
   // --- PAGE 1 SUBMIT ---
   const onPage1 = (data: any) => {
@@ -90,15 +81,23 @@ const CustomerOnboarding = () => {
     setIsLoading(true);
     // Combine all data
     const payload = { ...page1, ...page2, ...data };
-    // Combine country code and phone for Supabase
     const fullPhone = `${payload.countryCode}${payload.phone}`;
-    // Sign up with Supabase
-    const { error, data: signUpData } = await supabase.auth.signUp({
-      email: payload.email,
-      password: payload.password,
-      phone: fullPhone,
-    });
-    // Optionally: Save demographics/hair profile to a user profile table
+    // Check if user is already authenticated (e.g. via Google)
+    const { data: { user } } = await supabase.auth.getUser();
+    let error = null;
+    if (!user) {
+      // Not authenticated, do sign up
+      const res = await supabase.auth.signUp({
+        email: payload.email,
+        password: payload.password,
+        phone: fullPhone,
+      });
+      error = res.error;
+    } else {
+      // Already authenticated, skip signUp
+      // Optionally update user profile here if needed
+    }
+    // Optionally: Save demographics/hair profile to a user profile table here
     setIsLoading(false);
     if (!error) {
       // Success: redirect to customer dashboard
@@ -187,7 +186,13 @@ const CustomerOnboarding = () => {
               </div>
               <Button type="submit" className="w-full">Continue</Button>
               <div className="text-center mt-2">
-                <a href="/auth/customer" className="text-sm text-muted-foreground hover:text-primary">Already a user? Login</a>
+                <button
+                  type="button"
+                  className="text-sm text-muted-foreground hover:text-primary"
+                  onClick={() => navigate('/login/customer')}
+                >
+                  Already a user? Login
+                </button>
               </div>
             </form>
           </Form>

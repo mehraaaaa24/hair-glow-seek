@@ -10,6 +10,7 @@ import ExpertAuth from "./pages/ExpertAuth";
 import CustomerDashboard from "./pages/CustomerDashboard";
 import ExpertDashboard from "./pages/ExpertDashboard";
 import NotFound from "./pages/NotFound";
+import CustomerLogin from "./pages/CustomerLogin";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,7 @@ const App = () => (
             <Route path="/auth/expert" element={<ExpertAuth />} />
             <Route path="/dashboard-customer" element={<CustomerDashboard />} />
             <Route path="/dashboard-expert" element={<ExpertDashboard />} />
+            <Route path="/login/customer" element={<CustomerLogin />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
